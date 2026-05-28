@@ -33,9 +33,9 @@ class Command(BaseCommand):
         ]
         for username, password, role in users:
             user, created = User.objects.get_or_create(username=username)
-            if created:
-                user.set_password(password)
-                user.save()
+            user.set_password(password)
+            user.is_active = True
+            user.save()
             UserProfile.objects.get_or_create(
                 user=user,
                 defaults={'client': client, 'role': role}
