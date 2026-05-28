@@ -25,7 +25,15 @@ def _get_emission_factor(activity_type, country_code):
     ef = EmissionFactor.objects.filter(
         activity_type=activity_type, country_code__isnull=True
     ).order_by('-vintage_year').first()
-    return ef, True
+    if ef:
+        # Only flag fallback when a country-specific factor exists for this
+        # activity type — meaning the global is a true fallback, not the
+        # intended factor (e.g. fuel combustion factors are global-only).
+        any_country_specific = EmissionFactor.objects.filter(
+            activity_type=activity_type, country_code__isnull=False
+        ).exists()
+        return ef, any_country_specific
+    return None, False
 
 
 def normalize_sap_row(raw_row, client):

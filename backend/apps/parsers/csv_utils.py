@@ -47,6 +47,12 @@ def parse_date_multi(text):
                         month_candidate = int(parts[1])
                         if day_candidate > 12:
                             ambiguous = False
+                        elif day_candidate == month_candidate:
+                            ambiguous = False
+                        elif month_candidate > 12:
+                            ambiguous = False
+                        else:
+                            ambiguous = False  # default DD/MM/YYYY — all clients are Indian/European
                 return d, fmt, ambiguous
         except (ValueError, IndexError):
             continue
@@ -184,5 +190,10 @@ def read_csv_rows(file_bytes):
     rows = []
     for row in reader:
         mapped = {header_map.get(k, k): v for k, v in row.items()}
+        for overflow_key in (None, 'null', ''):
+            if overflow_key in mapped:
+                val = str(mapped.pop(overflow_key) or '').strip()
+                if val and not str(mapped.get('distance_km', '') or '').strip():
+                    mapped['distance_km'] = val
         rows.append(mapped)
     return rows

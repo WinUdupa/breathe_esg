@@ -17,17 +17,28 @@ def run_outlier_detection(batch):
     for subtype, group in by_subtype.items():
         if len(group) < 3:
             continue
-        values = [float(r.co2e_kg) for r in group]
-        mean = statistics.mean(values)
-        stdev = statistics.stdev(values)
+
+        # IQR-based outlier detection: robust against the outlier inflating
+        # mean and sigma (which breaks the naive mean + 3σ rule for small samples).
+        values = sorted(float(r.co2e_kg) for r in group)
+        n = len(values)
+        mid = n // 2
+        q1 = statistics.median(values[:mid])
+        q3 = statistics.median(values[n - mid:])
+        iqr = q3 - q1
+        if iqr == 0:
+            continue
+        upper_fence = q3 + 3 * iqr
+        lower_fence = q1 - 3 * iqr
+
         for row in group:
             val = float(row.co2e_kg)
             changed = False
-            if val > mean + 3 * stdev:
+            if val > upper_fence:
                 if 'OUTLIER_HIGH' not in row.flags:
                     row.flags = row.flags + ['OUTLIER_HIGH']
                     changed = True
-            elif val < mean - 3 * stdev and val > 0:
+            elif val < lower_fence and val > 0:
                 if 'OUTLIER_LOW' not in row.flags:
                     row.flags = row.flags + ['OUTLIER_LOW']
                     changed = True

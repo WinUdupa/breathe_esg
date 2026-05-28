@@ -10,14 +10,20 @@ INDIAN_UTILITY_KEYWORDS = ['bescom', 'msedcl', 'tneb', 'mseb', 'kseb', 'tsspdcl'
 INDIAN_CITY_KEYWORDS = ['bengaluru', 'bangalore', 'pune', 'mumbai', 'chennai', 'delhi', 'kolkata', 'hyderabad']
 
 
-def _guess_country(address):
-    if not address:
-        return 'IN'
-    lower = address.lower()
+def _guess_country(address, account_number, client):
+    lower = address.lower() if address else ''
+    acct_upper = account_number.upper() if account_number else ''
+
+    if any(kw in lower for kw in ('germany', 'deutschland')) or acct_upper.startswith('DE-'):
+        return 'DE'
+    if any(kw in lower for kw in ('uk', 'united kingdom')):
+        return 'GB'
+    if any(kw in lower for kw in ('usa', 'united states')):
+        return 'US'
     for kw in INDIAN_UTILITY_KEYWORDS + INDIAN_CITY_KEYWORDS:
         if kw in lower:
             return 'IN'
-    return 'IN'
+    return client.country_default
 
 
 def _get_ef(country_code):
@@ -29,7 +35,14 @@ def _get_ef(country_code):
     ef = EmissionFactor.objects.filter(
         activity_type='GRID_ELECTRICITY', country_code__isnull=True
     ).order_by('-vintage_year').first()
-    return ef, True
+    if ef:
+        # Only flag fallback when a country-specific GRID_ELECTRICITY factor
+        # exists — meaning a better country factor was available but not used.
+        any_country_specific = EmissionFactor.objects.filter(
+            activity_type='GRID_ELECTRICITY', country_code__isnull=False
+        ).exists()
+        return ef, any_country_specific
+    return None, False
 
 
 def normalize_utility_row(raw_row, client, batch_meter_periods):
@@ -66,6 +79,8 @@ def normalize_utility_row(raw_row, client, batch_meter_periods):
         ).first()
         if not period:
             flags.append('DATE_OUTSIDE_PERIOD')
+    else:
+        flags.append('DATE_OUTSIDE_PERIOD')
     na.reporting_period = period
 
     # 3. Parse usage
@@ -117,11 +132,23 @@ def normalize_utility_row(raw_row, client, batch_meter_periods):
         existing.append((start_date, end_date))
         batch_meter_periods[meter_key] = existing
 
+    # 6a. Duplicate detection
+    if normalized_qty is not None and start_date and meter:
+        dup_qty = Decimal(str(normalized_qty))
+        if NormalizedActivity.objects.filter(
+            client=client,
+            raw_location_code=meter,
+            activity_period_start=start_date,
+            normalized_quantity=dup_qty,
+        ).exists():
+            flags.append('DUPLICATE_SUSPECTED')
+
     # 7. Country / address
     address = str(data.get('address', '')).strip()
+    account_number = str(data.get('account', '')).strip()
     na.resolved_location = address
-    na.resolved_country_code = _guess_country(address)
-    na.raw_location_code = str(data.get('meter', '')).strip()
+    na.resolved_country_code = _guess_country(address, account_number, client)
+    na.raw_location_code = meter
 
     # 8. Outlier check (>200000 kWh)
     if normalized_qty and normalized_qty > 200000:
