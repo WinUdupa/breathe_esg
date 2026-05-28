@@ -1,0 +1,16 @@
+Account Number,Meter ID,Service Address,Period Start,Period End,Usage (kWh),Unit,Read Type,Amount
+KA-BESCOM-00421,MTR-BLR-0041,Plot 14 Peenya Industrial Area Bengaluru,01/01/2024,31/01/2024,42300,kWh,Actual,338400
+KA-BESCOM-00421,MTR-BLR-0041,Plot 14 Peenya Industrial Area Bengaluru,01/02/2024,29/02/2024,39800,kWh,Actual,318400
+KA-BESCOM-00421,MTR-BLR-0041,Plot 14 Peenya Industrial Area Bengaluru,01/03/2024,31/03/2024,41500,kWh,Actual,332000
+MH-MSEDCL-00887,MTR-PNQ-0022,MIDC Bhosari Pune Maharashtra,12/01/2024,14/02/2024,61200,kWh,Actual,489600
+MH-MSEDCL-00887,MTR-PNQ-0022,MIDC Bhosari Pune Maharashtra,14/02/2024,15/03/2024,58400,kWh,Estimated,467200
+MH-MSEDCL-00887,MTR-PNQ-0022,MIDC Bhosari Pune Maharashtra,15/03/2024,16/04/2024,59100,kWh,Actual,472800
+KA-BESCOM-00422,MTR-BLR-0098,Plot 31 Bommasandra Industrial Estate Bengaluru,2024-01-05,2024-02-04,28700,kWh,Actual,229600
+KA-BESCOM-00422,MTR-BLR-0098,Plot 31 Bommasandra Industrial Estate Bengaluru,2024-02-05,2024-03-06,29100,kWh,Actual,232800
+KA-BESCOM-00422,MTR-BLR-0098,Plot 31 Bommasandra Industrial Estate Bengaluru,2024-03-07,2024-04-05,285000,kWh,Actual,2280000
+TN-TNEB-01134,MTR-CHN-0055,110 SIDCO Industrial Estate Chennai Tamil Nadu,01-Jan-2024,31-Jan-2024,51800,kWh,Actual,414400
+TN-TNEB-01134,MTR-CHN-0055,110 SIDCO Industrial Estate Chennai Tamil Nadu,01-Feb-2024,29-Feb-2024,49300,kWh,Actual,394400
+TN-TNEB-01134,MTR-CHN-0055,110 SIDCO Industrial Estate Chennai Tamil Nadu,01-Mar-2024,31-Mar-2024,52100,kWh,Actual,416800
+MH-MSEDCL-00992,MTR-MUM-0017,Andheri East Industrial Zone Mumbai Maharashtra,08/01/2024,07/02/2024,,kWh,Actual,187500
+MH-MSEDCL-00992,MTR-MUM-0017,Andheri East Industrial Zone Mumbai Maharashtra,08/02/2024,09/03/2024,23400,kWh,Actual,187200
+MH-MSEDCL-00992,MTR-MUM-0017,Andheri East Industrial Zone Mumbai Maharashtra,10/03/2024,08/04/2024,24100,kWh,Actual,192800

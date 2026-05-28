@@ -1,0 +1,16 @@
+Trip ID,Expense Type,Date,Employee,Department,Amount,Currency,Origin,Destination,Cabin Class,Round Trip,Hotel City,Hotel Country,Check In,Check Out,Distance (km)
+TRP-2024-0041,Flight,08/01/2024,E1023,Sales,18500,INR,BLR,DEL,Economy,Yes,,,,
+TRP-2024-0041,Hotel,08/01/2024,E1023,Sales,8200,INR,,,,,New Delhi,India,08/01/2024,10/01/2024,
+TRP-2024-0082,Flight,15/01/2024,E2087,Engineering,245000,INR,BOM,LHR,Business,No,,,,
+TRP-2024-0082,Hotel,15/01/2024,E2087,Engineering,32000,INR,,,,,London,UK,15/01/2024,19/01/2024,
+TRP-2024-0095,Taxi,22/01/2024,E1156,Finance,850,INR,,,,,,,,, 42
+TRP-2024-0103,Flight,03/02/2024,E3041,Sales,12400,INR,DEL,BOM,Economy,Yes,,,,
+TRP-2024-0118,Flight,14/02/2024,E1023,Sales,67500,INR,BLR,DXB,Economy,Yes,,,,1740
+TRP-2024-0118,Hotel,14/02/2024,E1023,Sales,15600,INR,,,,,Dubai,UAE,14/02/2024,17/02/2024,
+TRP-2024-0134,Train,20/02/2024,E2203,Operations,2200,INR,BLR,MAS,,,,,,,350
+TRP-2024-0141,Flight,28/02/2024,E4012,HR,9800,INR,PNQ,CCU,Economy,No,,,,
+TRP-2024-0155,Car Rental,05/03/2024,E1156,Finance,4500,INR,,,,,,,,, 280
+TRP-2024-0163,Flight,12/03/2024,E2087,Engineering,310000,INR,BOM,SFO,Business,Yes,,,,
+TRP-2024-0163,Hotel,12/03/2024,E2087,Engineering,89000,INR,,,,,San Francisco,USA,12/03/2024,16/03/2024,
+TRP-2024-0178,Flight,19/03/2024,E5501,Management,185000,INR,DEL,SIN,First,Yes,,,,
+TRP-2024-0191,Taxi,25/03/2024,E3041,Sales,1200,INR,,,,,,,,,
