@@ -19,7 +19,11 @@ export default function LoginPage() {
         : user.role === 'ANALYST' ? '/analyst' : '/admin'
       navigate(redirect, { replace: true })
     } catch (err) {
-      setError(err.response?.data?.detail || 'Login failed')
+      const msg = err.response?.data?.detail
+        || err.response?.data
+        || err.message
+        || 'Login failed'
+      setError(typeof msg === 'string' ? msg : JSON.stringify(msg))
     } finally {
       setLoading(false)
     }

@@ -24,7 +24,7 @@ services:
       - key: DEBUG
         value: "False"
       - key: CORS_ALLOWED_ORIGINS
-        value: https://breathe-esg-frontend.onrender.com
+        value: https://breathe-esg-frontend-urta.onrender.com
       - key: PYTHON_VERSION
         value: "3.12.0"
 
@@ -35,7 +35,8 @@ services:
     staticPublishPath: ./frontend/dist
     envVars:
       - key: VITE_API_URL
-        value: https://breathe-esg-api.onrender.com
+        value: https://breathe-esg-api-dahj.onrender.com
+
     routes:
       - type: rewrite
         source: /*
