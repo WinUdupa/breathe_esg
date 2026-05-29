@@ -132,7 +132,8 @@ def normalize_utility_row(raw_row, client, batch_meter_periods):
         existing.append((start_date, end_date))
         batch_meter_periods[meter_key] = existing
 
-    # 6a. Duplicate detection
+    # 6a. Duplicate detection — only flag if a row with the same meter/date/qty
+    # exists in a *different* batch (rows within the current batch are not duplicates)
     if normalized_qty is not None and start_date and meter:
         dup_qty = Decimal(str(normalized_qty))
         if NormalizedActivity.objects.filter(
@@ -140,7 +141,7 @@ def normalize_utility_row(raw_row, client, batch_meter_periods):
             raw_location_code=meter,
             activity_period_start=start_date,
             normalized_quantity=dup_qty,
-        ).exists():
+        ).exclude(batch=raw_row.batch).exists():
             flags.append('DUPLICATE_SUSPECTED')
 
     # 7. Country / address

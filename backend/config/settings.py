@@ -24,6 +24,7 @@ INSTALLED_APPS = [
     'apps.normalization',
     'apps.review',
     'apps.reporting',
+    'apps.audit',
 ]
 
 MIDDLEWARE = [

@@ -10,4 +10,6 @@ urlpatterns = [
     path('api/review/', include('apps.review.urls')),
     path('api/admin/', include('apps.review.admin_urls')),
     path('api/reporting/', include('apps.reporting.urls')),
+    path('api/audit/', include('apps.audit.urls')),
+    path('api/periods/', include('apps.clients.period_urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

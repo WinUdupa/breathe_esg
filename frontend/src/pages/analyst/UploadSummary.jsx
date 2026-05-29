@@ -1,5 +1,4 @@
-import { useState } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import api from '../../api/client'
 import Layout from '../../components/Layout'
@@ -9,45 +8,27 @@ import ScopeSummaryCard from '../../components/ScopeSummaryCard'
 export default function UploadSummary() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const qc = useQueryClient()
-  const [submitNote, setSubmitNote] = useState('')
-  const [showConfirm, setShowConfirm] = useState(false)
-  const [submitError, setSubmitError] = useState('')
 
   const { data: batch, isLoading } = useQuery({
     queryKey: ['batch', id],
-    queryFn: async () => {
-      const res = await api.get(`/ingestion/batches/${id}/`)
-      // Set to in-review if pending
-      if (res.data.status === 'PENDING_REVIEW') {
-        await api.post(`/review/batches/${id}/set-in-review/`)
-      }
-      return res.data
-    },
+    queryFn: () => api.get(`/ingestion/batches/${id}/`).then(r => r.data),
     refetchInterval: 5000,
-  })
-
-  const submitMutation = useMutation({
-    mutationFn: () => api.post(`/review/batches/${id}/submit/`, { analyst_note: submitNote }),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['batch', id] })
-      qc.invalidateQueries({ queryKey: ['analyst-batches'] })
-      navigate('/analyst')
-    },
-    onError: (err) => setSubmitError(err.response?.data?.detail || 'Submit failed'),
   })
 
   if (isLoading) return <Layout><p className="text-gray-500">Loading…</p></Layout>
   if (!batch) return <Layout><p className="text-red-600">Not found</p></Layout>
 
-  const canSubmit = batch.row_stats?.flagged === 0
-  const readonly = batch.status === 'ANALYST_APPROVED'
+  const backHref = batch.submission_id
+    ? `/analyst/submission/${batch.submission_id}`
+    : '/analyst'
+
+  const readonly = ['ANALYST_APPROVED', 'FINALIZED'].includes(batch.status)
 
   return (
     <Layout>
       <div className="max-w-4xl mx-auto">
         <div className="flex items-center gap-3 mb-6">
-          <Link to="/analyst" className="text-blue-600 hover:underline text-sm">← Dashboard</Link>
+          <Link to={backHref} className="text-blue-600 hover:underline text-sm">← Back</Link>
         </div>
 
         <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6">
@@ -85,50 +66,19 @@ export default function UploadSummary() {
           )}
         </div>
 
-        {!readonly && (
-          <div className="bg-white border border-gray-200 rounded-lg p-6">
-            {!canSubmit ? (
-              <p className="text-amber-600 text-sm font-medium">
-                ⚠ Resolve all {batch.row_stats?.flagged} flagged rows before submitting.
-              </p>
-            ) : (
-              <div>
-                <p className="text-green-600 text-sm font-medium mb-3">✓ All flagged rows resolved. Ready to submit.</p>
-                {!showConfirm ? (
-                  <button
-                    onClick={() => setShowConfirm(true)}
-                    className="bg-green-600 text-white px-6 py-2 rounded-md text-sm font-medium hover:bg-green-700"
-                  >
-                    Submit for Admin Review
-                  </button>
-                ) : (
-                  <div className="flex flex-col gap-3">
-                    <textarea
-                      placeholder="Optional analyst note…"
-                      value={submitNote}
-                      onChange={e => setSubmitNote(e.target.value)}
-                      className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full"
-                      rows={3}
-                    />
-                    {submitError && <p className="text-red-600 text-sm">{submitError}</p>}
-                    <div className="flex gap-3">
-                      <button
-                        onClick={() => submitMutation.mutate()}
-                        disabled={submitMutation.isPending}
-                        className="bg-green-600 text-white px-6 py-2 rounded-md text-sm font-medium hover:bg-green-700 disabled:opacity-50"
-                      >
-                        {submitMutation.isPending ? 'Submitting…' : 'Confirm Submit'}
-                      </button>
-                      <button
-                        onClick={() => setShowConfirm(false)}
-                        className="bg-gray-100 text-gray-700 px-4 py-2 rounded-md text-sm hover:bg-gray-200"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
+        {batch.row_stats?.flagged > 0 && !readonly && (
+          <p className="text-sm text-amber-600 font-medium text-center mb-3">
+            ⚠ {batch.row_stats.flagged} flagged rows remain — resolve them before the batch can be submitted.
+          </p>
+        )}
+
+        {batch.row_stats?.rejected > 0 && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-sm text-red-700 mt-3">
+            <strong>{batch.row_stats.rejected} row{batch.row_stats.rejected !== 1 ? 's' : ''} rejected</strong>
+            {batch.rejected_co2e > 0 && (
+              <span className="ml-2">
+                — approx. {Number(batch.rejected_co2e).toLocaleString(undefined, { maximumFractionDigits: 1 })} kg CO₂e excluded from this file's totals.
+              </span>
             )}
           </div>
         )}

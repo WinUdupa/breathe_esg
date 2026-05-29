@@ -4,12 +4,18 @@ import { AuthProvider, useAuth } from './contexts/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import LoginPage from './pages/LoginPage'
 import UserDashboard from './pages/user/UserDashboard'
+import SubmissionDetail from './pages/user/SubmissionDetail'
 import UserUploadDetail from './pages/user/UserUploadDetail'
 import AnalystDashboard from './pages/analyst/AnalystDashboard'
+import AnalystSubmissionDetail from './pages/analyst/AnalystSubmissionDetail'
 import UploadSummary from './pages/analyst/UploadSummary'
 import ScopeRowView from './pages/analyst/ScopeRowView'
 import AdminDashboard from './pages/admin/AdminDashboard'
+import AdminSubmissionView from './pages/admin/AdminSubmissionView'
 import AdminBatchView from './pages/admin/AdminBatchView'
+import AuditLogPage from './pages/admin/AuditLogPage'
+import PeriodManagement from './pages/admin/PeriodManagement'
+import ReportingPage from './pages/ReportingPage'
 
 const qc = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 10000 } },
@@ -37,6 +43,11 @@ export default function App() {
                 <UserDashboard />
               </ProtectedRoute>
             } />
+            <Route path="/submissions/:id" element={
+              <ProtectedRoute allowedRoles={['UPLOADER', 'ANALYST', 'ADMIN']}>
+                <SubmissionDetail />
+              </ProtectedRoute>
+            } />
             <Route path="/uploads/:id" element={
               <ProtectedRoute allowedRoles={['UPLOADER', 'ANALYST', 'ADMIN']}>
                 <UserUploadDetail />
@@ -47,6 +58,11 @@ export default function App() {
             <Route path="/analyst" element={
               <ProtectedRoute allowedRoles={['ANALYST', 'ADMIN']}>
                 <AnalystDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/analyst/submission/:id" element={
+              <ProtectedRoute allowedRoles={['ANALYST', 'ADMIN']}>
+                <AnalystSubmissionDetail />
               </ProtectedRoute>
             } />
             <Route path="/analyst/batch/:id" element={
@@ -66,6 +82,11 @@ export default function App() {
                 <AdminDashboard />
               </ProtectedRoute>
             } />
+            <Route path="/admin/submission/:id" element={
+              <ProtectedRoute allowedRoles={['ADMIN']}>
+                <AdminSubmissionView />
+              </ProtectedRoute>
+            } />
             <Route path="/admin/batch/:id" element={
               <ProtectedRoute allowedRoles={['ADMIN']}>
                 <AdminBatchView />
@@ -74,6 +95,25 @@ export default function App() {
             <Route path="/admin/batch/:id/scope/:scope" element={
               <ProtectedRoute allowedRoles={['ADMIN']}>
                 <ScopeRowView readonly />
+              </ProtectedRoute>
+            } />
+
+            {/* Reporting — analyst + admin */}
+            <Route path="/reporting" element={
+              <ProtectedRoute allowedRoles={['ANALYST', 'ADMIN']}>
+                <ReportingPage />
+              </ProtectedRoute>
+            } />
+
+            {/* Admin tools */}
+            <Route path="/admin/audit" element={
+              <ProtectedRoute allowedRoles={['ADMIN']}>
+                <AuditLogPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/periods" element={
+              <ProtectedRoute allowedRoles={['ADMIN']}>
+                <PeriodManagement />
               </ProtectedRoute>
             } />
 

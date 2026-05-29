@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from apps.normalization.models import NormalizedActivity
 from apps.normalization.flags import FLAG_MESSAGES
 from apps.ingestion.models import IngestionBatch
+from apps.audit.logger import log as audit_log
 
 
 def row_to_dict(row, detail=False):
@@ -153,6 +154,9 @@ def row_edit_view(request, row_id):
     row.reviewed_by = None
     row.reviewed_at = None
     row.save()
+    if history:
+        audit_log(request.user, client, 'ROW_EDITED', 'NormalizedActivity', row.id,
+                  {'row_number': row.raw_row.row_number, 'changes': history[-len(request.data):]})
     return Response(row_to_dict(row, detail=True))
 
 
@@ -178,6 +182,9 @@ def row_accept_view(request, row_id):
     row.reviewed_at = timezone.now()
     row.review_note = review_note
     row.save()
+    audit_log(request.user, client, 'ROW_ACCEPTED', 'NormalizedActivity', row.id,
+              {'row_number': row.raw_row.row_number, 'subtype': row.activity_subtype,
+               'co2e_kg': float(row.co2e_kg) if row.co2e_kg else None, 'note': review_note})
     return Response(row_to_dict(row))
 
 
@@ -203,6 +210,9 @@ def row_reject_view(request, row_id):
     row.reviewed_at = timezone.now()
     row.review_note = review_note
     row.save()
+    audit_log(request.user, client, 'ROW_REJECTED', 'NormalizedActivity', row.id,
+              {'row_number': row.raw_row.row_number, 'subtype': row.activity_subtype,
+               'co2e_kg': float(row.co2e_kg) if row.co2e_kg else None, 'note': review_note})
     return Response(row_to_dict(row))
 
 
@@ -227,6 +237,8 @@ def bulk_accept_view(request):
         reviewed_at=now,
         review_note='Bulk accepted',
     )
+    audit_log(request.user, client, 'ROWS_BULK_ACCEPTED', 'IngestionBatch', batch_id or '',
+              {'scope': scope, 'count': updated})
     return Response({'accepted': updated})
 
 
@@ -280,3 +292,73 @@ def batch_set_in_review_view(request, batch_id):
         batch.status = 'IN_REVIEW'
         batch.save()
     return Response({'status': batch.status})
+
+
+# ── Submission-level analyst endpoints ────────────────────────────────────────
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def submission_set_in_review_view(request, submission_id):
+    from apps.ingestion.models import Submission
+    profile = request.user.profile
+    client = profile.client
+    try:
+        submission = Submission.objects.get(id=submission_id, client=client)
+    except Submission.DoesNotExist:
+        return Response({'detail': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    if submission.status == 'PENDING_REVIEW':
+        submission.status = 'IN_REVIEW'
+        submission.save()
+        submission.files.filter(status='PENDING_REVIEW').update(status='IN_REVIEW')
+    return Response({'status': submission.status})
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def submission_analyst_submit_view(request, submission_id):
+    from apps.ingestion.models import Submission
+    profile = request.user.profile
+    client = profile.client
+    try:
+        submission = Submission.objects.get(id=submission_id, client=client)
+    except Submission.DoesNotExist:
+        return Response({'detail': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    if submission.status not in ('PENDING_REVIEW', 'IN_REVIEW'):
+        return Response({'detail': 'Submission not in review'}, status=status.HTTP_400_BAD_REQUEST)
+
+    all_batch_ids = list(submission.files.values_list('id', flat=True))
+
+    flagged_remaining = NormalizedActivity.objects.filter(
+        batch_id__in=all_batch_ids, status='FLAGGED'
+    ).count()
+    if flagged_remaining > 0:
+        return Response(
+            {'detail': f'{flagged_remaining} flagged rows must be resolved before submitting'},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    now = timezone.now()
+    NormalizedActivity.objects.filter(batch_id__in=all_batch_ids, status='PENDING').update(
+        status='ACCEPTED',
+        reviewed_by=request.user,
+        reviewed_at=now,
+        review_note='Auto-accepted on submit',
+    )
+
+    submission.files.all().update(
+        status='ANALYST_APPROVED',
+        reviewed_by=request.user,
+        reviewed_at=now,
+        analyst_note=request.data.get('analyst_note', ''),
+    )
+
+    submission.status = 'ANALYST_APPROVED'
+    submission.reviewed_by = request.user
+    submission.reviewed_at = now
+    submission.analyst_note = request.data.get('analyst_note', '')
+    submission.save()
+    audit_log(request.user, client, 'SUBMISSION_ANALYST_APPROVED', 'Submission', submission.id,
+              {'batch_number': submission.batch_number, 'note': submission.analyst_note})
+    return Response({'status': 'ANALYST_APPROVED'})
